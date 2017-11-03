@@ -28,7 +28,7 @@ contract DefID{
         bool accepted;
     }
 
-	mapping (bytes32 => Attribute) public attrbutes;
+	mapping (bytes32 => Attribute) public attributes;
 
 	// modifier onlyowner {
  //        require(isOwner(msg.sender));
@@ -70,7 +70,7 @@ contract DefID{
         }
         attribute.hash = _hash;
         attribute.endorsementIncentive = _endorsementIncentive;
-        sendEvent(INFO_EVENT, "Attribute has been added and Endorsement Bounty set!");
+        sendEvent(INFO_EVENT, "Attribute added & Bounty set.");
         return true;
 	}
 
@@ -85,10 +85,10 @@ contract DefID{
 		return true;
 	}
 
-	function updateAttribute(bytes32 _oldHash, bytes32 _newHash) onlyBy(owner) returns(bool){
+	function updateAttribute(bytes32 _oldHash, bytes32 _newHash, uint _newIncentive) onlyBy(owner) returns(bool){
 		sendEvent(DEBUG_EVENT, "Attempting to update attribute");
         removeAttribute(_oldHash);
-        addAttribute(_newHash);
+        addAttribute(_newHash, _newIncentive);
         sendEvent(SIG_CHANGE_EVENT, "Attribute has been updated");
         return true;
 	}
@@ -100,7 +100,7 @@ contract DefID{
     function addEndorsement(bytes32 _attributeHash, bytes32 _endorsementHash) returns(bool) {
         var attribute = attributes[_attributeHash];
         if (attribute.hash != _attributeHash) {
-            sendEvent(ERROR_EVENT, "Attribute doesn't exist");
+            sendEvent(ERROR_EVENT, "Attribute doesnt exist");
             revert();
         }
         var endorsement = attribute.endorsements[_endorsementHash];
@@ -122,8 +122,9 @@ contract DefID{
         var attribute = attributes[_attributeHash];
         var endorsement = attribute.endorsements[_endorsementHash];
         endorsement.accepted = true;
+        sendEvent(SIG_CHANGE_EVENT, "Endorsement has been accepted.");
         transferEndorsementBounty(endorsement.endorser, attribute.endorsementIncentive);
-        sendEvent(SIG_CHANGE_EVENT, "Endorsement has been acceptedby User and Bounty released!");
+        sendEvent(SIG_CHANGE_EVENT, "Bounty released to endorser.");
         return true;
     }
 
@@ -138,14 +139,14 @@ contract DefID{
         }
         var endorsement = attribute.endorsements[_endorsementHash];
         if (endorsement.hash != _endorsementHash) {
-            sendEvent(ERROR_EVENT, "Endorsement doesn't exist");
+            sendEvent(ERROR_EVENT, "Endorsement doesnt exist");
             return false;
         }
         if (endorsement.accepted == true) {
             sendEvent(INFO_EVENT, "Endorsement exists for attribute");
             return true;
         } else {
-            sendEvent(ERROR_EVENT, "Endorsement hasn't been accepted");
+            sendEvent(ERROR_EVENT, "Endorsement hasnt been accepted");
             return false;
         }
     }
@@ -179,7 +180,7 @@ contract DefID{
      * Only 1 encryptionPublicKey is allowed per account, therefore use same set
      * method for both create and update.
      */
-    function setEncryptionPublicKey(string _myEncryptionPublicKey) onlyBy(owner) checkBlockLock() returns(bool) {
+    function setEncryptionPublicKey(string _myEncryptionPublicKey) onlyBy(owner) returns(bool) {
         encryptionPublicKey = _myEncryptionPublicKey;
         sendEvent(SIG_CHANGE_EVENT, "Encryption key added");
         return true;
@@ -190,7 +191,7 @@ contract DefID{
      * Only 1 signingPublicKey allowed per account, therefore use same set method
      * for both create and update.
      */
-    function setSigningPublicKey(string _mySigningPublicKey) onlyBy(owner) checkBlockLock() returns(bool) {
+    function setSigningPublicKey(string _mySigningPublicKey) onlyBy(owner) returns(bool) {
         signingPublicKey = _mySigningPublicKey;
         sendEvent(SIG_CHANGE_EVENT, "Signing key added");
         return true;
