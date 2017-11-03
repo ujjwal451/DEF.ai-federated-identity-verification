@@ -19,6 +19,7 @@ contract DefID{
 	struct Attribute{
 		bytes32 hash;
         mapping(bytes32 => Endorsement) endorsements;
+        uint endorsementIncentive;
 	}
 
 	struct Endorsement {
@@ -57,14 +58,19 @@ contract DefID{
 		return true;
 	}
 
-	function addAttribute(bytes32 _hash) onlyBy(owner) returns(bool){
+	function getOwner() onlyBy(override) returns(address) {
+        return owner;
+    }
+
+	function addAttribute(bytes32 _hash, uint _endorsementIncentive) onlyBy(owner) returns(bool){
 		var attribute = attributes[_hash];
         if (attribute.hash == _hash) {
             sendEvent(SIG_CHANGE_EVENT, "A hash exists for the attribute");
             revert();
         }
         attribute.hash = _hash;
-        sendEvent(INFO_EVENT, "Attribute has been added");
+        attribute.endorsementIncentive = _endorsementIncentive;
+        sendEvent(INFO_EVENT, "Attribute has been added and Endorsement Bounty set!");
         return true;
 	}
 
@@ -116,7 +122,9 @@ contract DefID{
         var attribute = attributes[_attributeHash];
         var endorsement = attribute.endorsements[_endorsementHash];
         endorsement.accepted = true;
-        sendEvent(SIG_CHANGE_EVENT, "Endorsement has been accepted");
+        transferEndorsementBounty(endorsement.endorser, attribute.endorsementIncentive);
+        sendEvent(SIG_CHANGE_EVENT, "Endorsement has been acceptedby User and Bounty released!");
+        return true;
     }
 
     /**
@@ -160,6 +168,10 @@ contract DefID{
         }
         sendEvent(SIG_CHANGE_EVENT, "Endorsement removal failed");
         revert();
+    }
+
+    function transferEndorsementBounty(address endorser, uint amount) private{
+    	assert(endorser.send(amount));
     }
 
     /**
